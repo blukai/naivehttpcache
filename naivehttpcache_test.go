@@ -53,3 +53,24 @@ func TestMaxAge(t *testing.T) {
 		t.Fatalf("expected 2 server hits; got %d", tsHits)
 	}
 }
+
+func TestTransport(t *testing.T) {
+	var proto string
+	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		proto = r.Proto
+	}))
+	ts.EnableHTTP2 = true
+	ts.StartTLS()
+	defer ts.Close()
+
+	httpClient := ts.Client()
+	httpClient.Transport = naivehttpcache.NewTransport(
+		httpcache.NewMemoryCache(),
+		naivehttpcache.WithTransport(httpClient.Transport),
+	)
+	httpClient.Get(ts.URL)
+
+	if proto != "HTTP/2.0" {
+		t.Fatalf("expected http 2 proto; got %s", proto)
+	}
+}

@@ -31,14 +31,21 @@ type Transport struct {
 }
 
 type Options struct {
-	MaxAge time.Duration
+	MaxAge    time.Duration
+	Transport http.RoundTripper
 }
 
 type Option func(*Options)
 
 func WithMaxAge(maxAge time.Duration) Option {
-	return func(opts *Options) {
-		opts.MaxAge = maxAge
+	return func(o *Options) {
+		o.MaxAge = maxAge
+	}
+}
+
+func WithTransport(transport http.RoundTripper) Option {
+	return func(o *Options) {
+		o.Transport = transport
 	}
 }
 
@@ -49,8 +56,9 @@ func NewTransport(cache httpcache.Cache, opts ...Option) *Transport {
 	}
 
 	return &Transport{
-		Cache:  cache,
-		MaxAge: args.MaxAge,
+		Transport: args.Transport,
+		Cache:     cache,
+		MaxAge:    args.MaxAge,
 	}
 }
 
